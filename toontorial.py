@@ -6,7 +6,7 @@ from print_speed import print_slow as print_slow
 from Toon import Toon
 from Enemy import Flunky
 import time
-
+from battles import Battle, return_to_playground_callback
 
 
 def is_valid_input(self, input_str):
@@ -19,9 +19,9 @@ def is_valid_input(self, input_str):
             
     
 
-def start_battle(player,level):
+def start_battle(player):
     flunky = Flunky(1) #create a level one flunky
-    targets = [flunky]
+    
     print()
     print()
     print_medium("-----------------------------------------------")
@@ -31,97 +31,41 @@ def start_battle(player,level):
     print()
     print()
     
-    flunky_begin_phrase = random.choice(flunky.begin_battle_phrases)
-    print_slow(f"Flunky: {flunky_begin_phrase}")
-    print()
-    
-    while player.health > 0 and flunky.health > 0:
-        print_medium("________________________")
-        print_medium(f"Your health: {player.health}|")
-        print_medium(f"Flunky Level {level} health: {flunky.health}|")
-        print_medium("---------------------------")
+    battle = Battle(player, flunky, return_to_playground_callback)
+    battle.fight()
+       
+    if flunky.health <=0:
+        print_slow("Congratulations! you defeated the Flunky!")
+        print_slow(".....")
+        print_medium("Thank you so much for doing that! I feel safer already!")
+        print_medium("I can tell you are going to go far in Toontown!")
+        print_medium("Many more Toons are in danger, and im sure you will be rewarded well for your help!")
+        print_medium("At the playground there will be an HQ that you can get tasks from to help Toontown for rewards!")
+        print_slow("...which reminds me!, heres 8 jellybeans for helping me out, you can buy more gags or ice cream with it!")
+        print()
+        print_slow(".....*You have recieved 8 jellybeans!")
+        print()
+        jellybean_reward = 8
+        player.earn_jellybeans(jellybean_reward)
+        print_medium("Just through the tunnel is the Playground, Toontown Central. From there you will find plenty more to do!")
+        print_slow("Good luck, and thanks again!")
+        print()
+        input("Press enter to go through the tunnel...")
+        return_to_playground_callback(player)
+        print()
         print()
         
-        #players turn
-        while True:
-            choice = player.get_battle_input(targets)
-            if choice == "0":
-                print_medium("You attempt to run...")
-                if random.random() < 0.5:
-                    print_medium("...You successfully escaped the battle!")
-                    from Toontown_Central import main as Toontown_Central_main
-                    Toontown_Central_main(player)
-                else:
-                    print_slow("... You couldnt escape this time!")
-                    break
-            if choice.isdigit() and 1 <= int(choice) <= len(player.inventory):
-                chosen_gag_name = player.inventory[int(choice) - 1]
-                if player.gag_counts.get(chosen_gag_name, 0) > 0:
-                    player.use_gag(flunky, chosen_gag_name)
-                    break
-                else:
-                    print_medium("You are out of that gag! Choose another.")
-            #checkpoint 1       
-            
-    
-        
-        if flunky.health <=0:
-            print_slow("Congratulations! you defeated the Flunky!")
-            print_slow(".....)")
-            print_medium("Thank you so much for doing that! I feel safer already!")
-            print_medium("I can tell you are going to go far in Toontown!")
-            print_medium("Many more Toons are in danger, and im sure you will be rewarded well for your help!")
-            print_medium("At the playground there will be an HQ that you can get tasks from to help Toontown for rewards!")
-            print_slow("...which reminds me!, heres 8 jellybeans for helping me out, you can buy more gags or ice cream with it!")
-            print()
-            print_slow(".....*You have recieved 8 jellybeans!")
-            (print)
-            jellybean_reward = 8
-            player.earn_jellybeans(jellybean_reward)
-            print_medium("Just through the tunnel is the Playground, Toontown Central. From there you will find plenty more to do!")
-            print_slow("Good luck, and thanks again!")
-            print()
-            input("Press enter to go through the tunnel...")
-            from Toontown_Central import main as Toontown_Central_main
-            Toontown_Central_main(player)
-            print()
-            print()
-        if player.health <= 0:
-            print_slow("...Oh no, you've been defeated and are now sad!")
-            break
-        
-        #flunkys turn
-        print_medium("__________________")
-        print_medium("It's the Flunky's turn!")
-        flunky_attack_name, attack_damage, hit = flunky.attack()
-        flunky_attack = next(attack for attack in flunky.attacks if attack["name"] == flunky_attack_name)
-        flunky_attack_phrases = flunky_attack["phrases"]
-        flunky_attack_phrase = random.choice(flunky_attack_phrases)
-        if hit:
-            print_medium("-----------------------------------------------")
-            print_slow(f"Flunky: {flunky_attack_phrase}")
-            print_medium(f"The Flunky used {flunky_attack_name} and hit!")
-            print_medium(f"The Flunky dealt {attack_damage} damage to you!")
-            print()
-            player.health -= attack_damage
-    
-        else:
-            print_slow(f"Flunky: {flunky_attack_phrase}")
-            print_medium(f"The Flunky used {flunky_attack_name} but missed!")
-            print()
-        if player.health <= 0:
-            print_slow("...Oh no, you've been defeated and are now sad!")
-            print_slow("...........")
-            print_slow("...Head low, You slowly make your way back to the playground...")
-            print_slow("Cheer up. Ice cream heals all wounds.")
-            from Toontown_Central import main as Toontown_Central_main
-            Toontown_Central_main(player)
+    elif player.health <= 0:
+        print_slow("...Oh no, you've been defeated and are now sad!")
+        print_slow("...........")
+        print_slow("...Head low, You slowly make your way back to the playground...")
+        print_slow("Cheer up. Ice cream heals all wounds.")
+        return_to_playground_callback(player)
        
     
 def main():
     print_slow("Welcome to Toontown! create your Toon here, and then you will be thrown into the action!")
     print("(you can press enter to speed up the text! also if you click on the terminal you might pause it)")
-    print("To load game, enter the corresponding input after typing your name.")
     print()
     
     #Get player's name
@@ -131,14 +75,11 @@ def main():
         print_medium(f"So, your name is {player_name}, Correct?")
         print("1.Yes")
         print("2.No")
-        print("9:Load Game.")
         player_confirmation = input().lower()
         if player_confirmation == "1" or "yes" in player_confirmation:
             break
         elif player_confirmation == "2" or "no" in player_confirmation:
             continue
-        elif player_confirmation =='9':
-                Toon.load_game()
         else:
             print("huh? Okay, lets try this again.")
             time.sleep(.8)
@@ -227,9 +168,11 @@ def main():
         print()
         print_slow("..... *You have recieved 2 cupcakes and 2 squirting flowers!")
         player.give_gags(["Cupcake", "Squirting Flower"], quantity=2)
+        print_medium("Squirt gags will soak the cogs, causing all gags to have 10 percent increased accuracy in the meantime!")
+        print_medium("Throw gags will heal you a small amount every time you hit with them!")
         input("Press enter to go outside and fight the Flunky!")
         #battle
-        start_battle(player,1)
+        start_battle(player)
         input("Press enter to enter the playground")
         from Toontown_Central import main as Toontown_Central_main
         Toontown_Central_main(player)
